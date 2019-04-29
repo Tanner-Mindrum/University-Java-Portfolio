@@ -1,10 +1,10 @@
 # Course Overview
 This course is the second semester focused on Java programming, which takes a closer look at the more complex topics and concepts associated with Java.
 
-Course Content:
+Course Content:<br />
 Developing applications using disciplined methods of design, coding, and testing in Java. Topics include: the structure and semantics of Java classes, data abstraction, encapsulation, cohesion, coupling, information hiding, object-oriented design, inheritance, interfaces, composition, delegation, polymorphism, and design patterns.
 
-Course Goals:
+Course Goals:<br />
 -Design an abstract class and an appropriate set of instantiable child classes to solve a software requirement
 -Effectively use inheritance, interfaces, composition and delegation
 -Effectively use Java Collections library
@@ -14,7 +14,7 @@ Course Goals:
 -Implement their class hierarchy to produce the software solution
 -Provide unit tests
 
-Projects Completed:
+Projects Completed:<br />
 1. WAR! (Classic card game)
 2. Boba shop ordering software
 3. Boba shop ordering software (cont. with GUI)
