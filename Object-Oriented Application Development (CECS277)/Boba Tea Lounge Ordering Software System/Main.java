@@ -18,10 +18,20 @@ public class Main {
         int heatChoice;
         double payment;
         double change;
+        double couponAmount = 0;
+        String couponType = "";
         int couponCount = 0;
-        int total = 0;
-        DecimalFormat df = new DecimalFormat("#.##");
+        ArrayList<Integer> toppingChoices = new ArrayList<Integer>();
+        double total = 0;
+        double totalWithTax = 0;
+        final double TAX = 0.0725;
+        DecimalFormat df = new DecimalFormat("0.00");
         CashRegister cashRegister = new CashRegister();
+        String discountDrinkName;
+        String discountDessertName;
+        double discountDrinkPrice;
+        double discountDessertPrice;
+        int discountDessertQuantity;
 
 
         boolean helpingCustomer = true;
@@ -59,7 +69,6 @@ public class Main {
                     Pastry newPastry = new Pastry();
                     Cookie newCookie = new Cookie();
                     Macaroon newMacaroon = new Macaroon();
-                    Coupon newCoupon = new Coupon("drink", .1);
                     System.out.println("\nWhat would you like to do?");
                     System.out.println("1. Purchase a drink");
                     System.out.println("2. Purchase pastries");
@@ -179,9 +188,15 @@ public class Main {
                                     choosingTopping = false;
                                 }
                                 else if (!(toppingOfChoice < 1 || toppingOfChoice > 7)) {
-                                    newBoba.addToppings(toppingOfChoice);
-                                    toppingCount++;
-                                    System.out.println("Topping added!");
+                                    if (toppingChoices.contains(toppingOfChoice)) {
+                                        System.out.println("You already chose that topping!");
+                                    }
+                                    else {
+                                        newBoba.addToppings(toppingOfChoice);
+                                        toppingChoices.add(toppingOfChoice);
+                                        toppingCount++;
+                                        System.out.println("Topping added!");
+                                    }
                                 }
                                 else {
                                     System.out.println("That option does not exist, try again.\n");
@@ -200,6 +215,8 @@ public class Main {
                                 }
                             }
                             newBoba.setBases(Integer.toString(baseOfChoice));
+
+                            toppingChoices.clear();
 
                             //Receipt
                             cashRegister.addDrink(newBoba);
@@ -241,7 +258,7 @@ public class Main {
                         }
                         newPastry.setQuantity(quantity);
 
-                        System.out.println("\nWould you like to heat your" + newPastry.getDessertName() + "? ($0.25)\n" +
+                        System.out.println("\nWould you like to heat your " + newPastry.getDessertName() + "? ($0.25)\n" +
                                 "1. Heat up\n2. Don't heat");
                         while (true) {
                             System.out.println("Enter option: ");
@@ -261,8 +278,8 @@ public class Main {
                     }
                     else if (choice == 3) {
                         //Cookies stuff
-                        System.out.println("\nWhat kind of cookie would you like?\n1. Oatmeal raisin ($4.00 per dozen)\n" +
-                                "2. White chocolate chunk ($5.00 per dozen)");
+                        System.out.println("\nWhat kind of cookie would you like?\n1. Oatmeal raisin ($2.00 for one, $12.00 per dozen)\n" +
+                                "2. White chocolate chunk ($2.50 for one, $15.00 per dozen)");
                         while (true) {
                             System.out.println("Enter option: ");
                             choice = in.nextInt();
@@ -281,7 +298,7 @@ public class Main {
                         }
 
                         while (true) {
-                            System.out.println("\nEnter quantity (per dozen): ");
+                            System.out.println("\nEnter quantity: ");
                             quantity = in.nextInt();
                             if (quantity > 0) {
                                 break;
@@ -336,41 +353,144 @@ public class Main {
                     }
                     else if (choice == 5) {
                         //Finalize sale stuff
+                        boolean workingWithCoupon = true;
                         cashRegister.setItemAmmountsAndSubtotals();
-                        //cashRegister.findLargest();
                         if (cashRegister.getGrandTotal() != 0) {
-                        System.out.println("\nSubtotal: " + cashRegister.getGrandTotal());
-                        System.out.println("\nDrink Coupon!");
-                        System.out.println(newCoupon.toString());
-                        System.out.println("\nDrink item with largest cost: " + cashRegister.discountItem());
-                        System.out.println("\nApply coupon?\n1. Apply coupon\n2. Don't apply coupon");
-                        while (true) {
-                            System.out.println("Enter option: ");
-                            choice = in.nextInt();
-                            if (choice < 1 || choice > 2) {
-                                System.out.println("That option does not exist, try again.\n");
-                            } else {
-                                break;
+                            total = cashRegister.getGrandTotal();
+                            System.out.println("\nDo you have any coupons?\nIf so, of what type?\n1. No coupons\n2. Drink coupon\n3. Dessert coupons");
+                            while (workingWithCoupon) {
+                                while (true) {
+                                    System.out.println("Enter option: ");
+                                    choice = in.nextInt();
+                                    if (choice < 1 || choice > 3) {
+                                        System.out.println("That option does not exist, try again.\n");
+                                    } else {
+                                        break;
+                                    }
+                                }
+                                if (choice == 1) {
+                                    workingWithCoupon = false;
+                                    break;
+                                }
+                                else if (choice == 2) {
+                                    couponType = "drink";
+                                }
+                                else {
+                                    couponType = "dessert";
+                                }
+                                while (true) {
+                                    System.out.println("Enter coupon amount: ");
+                                    couponAmount = in.nextDouble();
+                                    if (couponAmount > 0) {
+                                        break;
+                                    } else {
+                                        System.out.println("Invalid input, try again.\n");
+                                    }
+                                }
+                                Coupon newCoupon = new Coupon(couponType, couponAmount);
+                                System.out.println("\n" + newCoupon.toString());
+                                if (choice == 2) {
+                                    if (cashRegister.getDrinkCount() != 0) {
+                                        discountDrinkName = cashRegister.discountItemDrink();
+                                        discountDrinkPrice = cashRegister.getMaxCost();
+                                        System.out.println("Drink item with largest cost: " + discountDrinkName + " @ $" + df.format(discountDrinkPrice));
+                                        System.out.println("\nApply coupon?\n1. Apply coupon\n2. Don't apply coupon");
+                                        while (true) {
+                                            System.out.println("Enter option: ");
+                                            choice = in.nextInt();
+                                            if (choice < 1 || choice > 2) {
+                                                System.out.println("That option does not exist, try again.\n");
+                                            } else {
+                                                break;
+                                            }
+                                        }
+                                        if (choice == 1) {
+                                            total = total - discountDrinkPrice;
+                                            System.out.println("\nThat item now costs: $" +
+                                                    df.format((discountDrinkPrice - (discountDrinkPrice * newCoupon.getDiscount())))
+                                                    + "\nYou saved: $" + df.format((discountDrinkPrice * newCoupon.getDiscount())));
+                                            cashRegister.getMaxDrink().setCouponDiscount((discountDrinkPrice - (discountDrinkPrice * newCoupon.getDiscount())));
+                                            total = total + (discountDrinkPrice - (discountDrinkPrice * newCoupon.getDiscount()));
+                                            workingWithCoupon = false;
+                                            break;
+                                        }
+                                        else {
+                                            cashRegister.getMaxDrink().setCouponApplied(false);
+                                            workingWithCoupon = false;
+                                            break;
+                                        }
+                                    }
+                                    else {
+                                        System.out.println("\nCannot use coupon!\nYou have not purchased any drinks!");
+                                        workingWithCoupon = false;
+                                        break;
+                                    }
+                                }
+                                if (choice == 3) {
+                                    if (cashRegister.getDessertCount() != 0) {
+                                        discountDessertName = cashRegister.discountItemDessert();
+                                        discountDessertPrice = cashRegister.getMaxCost();
+                                        discountDessertQuantity = cashRegister.getMaxDessert().getQuantity();
+                                        System.out.println("Dessert item with largest cost: " + discountDessertQuantity + "x " + discountDessertName + " @ $" + df.format(discountDessertPrice));
+                                        System.out.println("\nApply coupon?\n1. Apply coupon\n2. Don't apply coupon");
+                                        while (true) {
+                                            System.out.println("Enter option: ");
+                                            choice = in.nextInt();
+                                            if (choice < 1 || choice > 2) {
+                                                System.out.println("That option does not exist, try again.\n");
+                                            } else {
+                                                break;
+                                            }
+                                        }
+                                        if (choice == 1) {
+                                            total = total - discountDessertPrice;
+                                            System.out.println("\nThat item now costs: $" +
+                                                    df.format((discountDessertPrice - (discountDessertPrice * newCoupon.getDiscount())))
+                                                    + "\nYou saved: $" + df.format((discountDessertPrice * newCoupon.getDiscount())));
+                                            cashRegister.getMaxDessert().setCouponDiscount((discountDessertPrice - (discountDessertPrice * newCoupon.getDiscount())));
+                                            total = total + (discountDessertPrice - (discountDessertPrice * newCoupon.getDiscount()));
+                                            workingWithCoupon = false;
+                                            break;
+                                        }
+                                        else {
+                                            cashRegister.getMaxDessert().setCouponApplied(false);
+                                            workingWithCoupon = false;
+                                            break;
+                                        }
+                                    }
+                                    else {
+                                        System.out.println("\nCannot use coupon!\nYou have not purchased any desserts!");
+                                        workingWithCoupon = false;
+                                        break;
+                                    }
+                                }
                             }
-                        }
-                        while (true) {
-                            System.out.println("\nEnter payment: ");
-                            payment = in.nextDouble();
-                            change = payment - cashRegister.getGrandTotal();
-                            if (change >= 0) {
-                                break;
-                            } else {
-                                System.out.println("Insufficient funds, try again!");
+
+                            System.out.println("\nSubtotal: $" + df.format(total));
+                            totalWithTax = ((total * TAX) + total);
+                            System.out.println("Total after tax: $" + df.format((total * TAX) + total));
+                            while (true) {
+                                System.out.println("\nEnter payment: ");
+                                payment = in.nextDouble();
+                                change = payment - totalWithTax;
+                                if (change >= 0) {
+                                    break;
+                                } else {
+                                    System.out.println("Insufficient funds, try again!");
+                                }
                             }
-                        }
-                        System.out.println("Here is your change: $" + df.format(change));
-                        System.out.print("\nReceipt:\n----------------------------------------------");
-                        System.out.println(cashRegister.toString());
-                        System.out.println("----------------------------------------------");
-                        System.out.printf("%46s", "TOTAL: $" + df.format(cashRegister.getGrandTotal()));
-                        System.out.println("\n");
-                        cashRegister.clearCashRegister();
-                        makingASale = false;
+                            System.out.print("\nReceipt:\n----------------------------------------------");
+                            System.out.println(cashRegister.toString());
+                            System.out.println("----------------------------------------------");
+                            System.out.printf("%46s", "SUBTOTAL: $" + df.format(total));
+                            System.out.println();
+                            System.out.printf("%46s", "CA Tax: $" + df.format(totalWithTax - total));
+                            System.out.println();
+                            System.out.printf("%46s", "TOTAL: $" + df.format(totalWithTax));
+                            System.out.println("\n");
+                            System.out.println("Here is your change: $" + df.format(change) + "\n");
+                            cashRegister.clearCashRegister();
+                            makingASale = false;
                         }
                         else {
                             System.out.println("No sales have been made!\n");
@@ -389,145 +509,9 @@ public class Main {
                 }
             }
             else if (choice == 3) {
-                System.out.println("\nClosing up shop.");
+                System.out.println("\nClosing cash register.");
                 helpingCustomer = false;
             }
         }
     }
-
-    public static void polymorph() {
-    }
 }
-
-
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-//                    else if (choice == 5) {
-//                        //Finalize sale stuff
-//                        cashRegister.setItemAmmountsAndSubtotals();
-//                        //cashRegister.findLargest();
-//                        if (cashRegister.getGrandTotal() != 0) {
-//                            //total = cashRegister.getGrandTotal() + (cashRegister.getDrinkSubtotal() + cashRegister.getDessertSubtotal()) * TAX;
-//                            total = cashRegister.getGrandTotal();
-//                            System.out.println("\nTotal before tax: " + df.format(total));
-//                            System.out.println("\nDo you have any coupons?\nIf so, of what type?\n1. No coupons\n2. Drink coupon\n3. Dessert coupons");
-//                            while (true) {
-//                                System.out.println("Enter option: ");
-//                                choice = in.nextInt();
-//                                if (choice < 1 || choice > 3) {
-//                                    System.out.println("That option does not exist, try again.\n");
-//                                } else {
-//                                    break;
-//                                }
-//                            }
-//                            if (choice == 2) {
-//                                couponType = "drink";
-//                            }
-//                            else {
-//                                couponType = "dessert";
-//                            }
-//                            System.out.println("Enter coupon amount: ");
-//                            while (true) {
-//                                System.out.println("Enter option: ");
-//                                couponAmount = in.nextDouble();
-//                                if (couponAmount > 0) {
-//                                    break;
-//                                }
-//                                else {
-//                                    System.out.println("That option does not exist, try again.\n");
-//                                }
-//                            }
-//                            Coupon newCoupon = new Coupon(couponType, couponAmount);
-//                            System.out.println(newCoupon.toString());
-//                            if (cashRegister.getDrinkCount() == 0) {
-//                                while (true) {
-//                                    total = cashRegister.getGrandTotal() + (cashRegister.getDrinkSubtotal() + cashRegister.getDessertSubtotal()) * TAX;
-//                                    System.out.println("\nTotal after tax: " + df.format(total));
-//                                    System.out.println("\nEnter payment: ");
-//                                    payment = in.nextDouble();
-//                                    change = payment - total;
-//                                    if (change >= 0) {
-//                                        break;
-//                                    }
-//                                    else {
-//                                        System.out.println("Insufficient funds, try again!");
-//                                    }
-//                                }
-//                                System.out.println("Here is your change: $" + df.format(change));
-//                                System.out.print("\nReceipt:\n----------------------------------------------");
-//                                System.out.println(cashRegister.toString());
-//                                System.out.println("----------------------------------------------");
-//                                System.out.printf("%46s", "TOTAL: $" + df.format(total));
-//                                System.out.println("\n");
-//                                cashRegister.clearCashRegister();
-//                                makingASale = false;
-//                            }
-//                            else {
-//                                System.out.println("\nDrink item with largest cost: " + cashRegister.discountItem());
-//                                System.out.println("\nApply coupon?\n1. Apply coupon\n2. Don't apply coupon");
-//                                while (true) {
-//                                    System.out.println("Enter option: ");
-//                                    choice = in.nextInt();
-//                                    if (choice < 1 || choice > 2) {
-//                                        System.out.println("That option does not exist, try again.\n");
-//                                    }
-//                                    else {
-//                                        break;
-//                                    }
-//                                }
-//                                if (choice == 1) {
-//                                    total = total - (cashRegister.getMaxCost() * newCoupon.getDiscount());
-//                                    System.out.println("\nNew total: " + df.format(total));
-//                                    total = total + (cashRegister.getDrinkSubtotal() + cashRegister.getDessertSubtotal()) * TAX;
-//                                    while (true) {
-//                                        System.out.println("\nTotal after tax: " + df.format(total));
-//                                        System.out.println("\nEnter payment: ");
-//                                        payment = in.nextDouble();
-//                                        change = payment - total;
-//                                        if (change >= 0) {
-//                                            break;
-//                                        } else {
-//                                            System.out.println("Insufficient funds, try again!");
-//                                        }
-//                                    }
-//                                    System.out.println("Here is your change: $" + df.format(change));
-//                                    System.out.print("\nReceipt:\n----------------------------------------------");
-//                                    System.out.println(cashRegister.toString());
-//                                    System.out.println("----------------------------------------------");
-//                                    System.out.printf("%46s", "(DISCOUNT) TOTAL: $" + df.format(total));
-//                                    System.out.println("\n");
-//                                    cashRegister.clearCashRegister();
-//                                    makingASale = false;
-//                                }
-//                                else {
-//                                    while (true) {
-//                                        total = cashRegister.getGrandTotal() + (cashRegister.getDrinkSubtotal() + cashRegister.getDessertSubtotal()) * TAX;
-//                                        System.out.println("\nTotal after tax: " + df.format(total));
-//                                        System.out.println("\nEnter payment: ");
-//                                        payment = in.nextDouble();
-//                                        change = payment - total;
-//                                        if (change >= 0) {
-//                                            break;
-//                                        } else {
-//                                            System.out.println("Insufficient funds, try again!");
-//                                        }
-//                                    }
-//                                    System.out.println("Here is your change: $" + df.format(change));
-//                                    System.out.print("\nReceipt:\n----------------------------------------------");
-//                                    System.out.println(cashRegister.toString());
-//                                    System.out.println("----------------------------------------------");
-//                                    System.out.printf("%46s", "TOTAL: $" + df.format(total));
-//                                    System.out.println("\n");
-//                                    cashRegister.clearCashRegister();
-//                                    makingASale = false;
-//                                }
-//                            }
-//                        }
-//                        else {
-//                            System.out.println("No sales have been made!\n");
-//                            makingASale = false;
-//                        }
-//                    }
-
